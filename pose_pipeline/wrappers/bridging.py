@@ -53,14 +53,30 @@ def get_model():
         print("Loading MeTRAbs Model...")
         model_cache = os.environ.get("TFHUB_CACHE_DIR")
         print(f"Model cached in: {model_cache}")
-        for url in METRABS_URLS:
-            try:
-                model = hub.load(url)
-                break
-            except Exception as e:
-                print(f"Failed to load from {url}: {e}")
-        else:
-            raise RuntimeError("Failed to load MeTRAbs model from all URLs")
+
+        model = None
+        if model_cache:
+            local_model_dir = os.path.join(model_cache, "metrabs_eff2l_y4_384px_800k_28ds")
+            local_tarball = os.path.join(model_cache, "metrabs_eff2l_y4_384px_800k_28ds.tar.gz")
+            if not os.path.isdir(local_model_dir) and os.path.isfile(local_tarball):
+                import tarfile
+                print(f"Extracting {local_tarball}...")
+                with tarfile.open(local_tarball, "r:gz") as tar:
+                    tar.extractall(model_cache)
+            if os.path.isdir(local_model_dir):
+                print(f"Loading from local cache: {local_model_dir}")
+                import tensorflow as tf
+                model = tf.saved_model.load(local_model_dir)
+
+        if model is None:
+            for url in METRABS_URLS:
+                try:
+                    model = hub.load(url)
+                    break
+                except Exception as e:
+                    print(f"Failed to load from {url}: {e}")
+            else:
+                raise RuntimeError("Failed to load MeTRAbs model from all URLs")
         print("MeTRAbs Model Loaded")
         model.per_skeleton_joint_names = {
             k: v.numpy() for k, v in model.per_skeleton_joint_names.items()
