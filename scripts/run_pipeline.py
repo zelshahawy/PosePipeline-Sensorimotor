@@ -88,7 +88,7 @@ def import_videos(video_dir, project):
 
 def run_video_info(proj_filt):
     print("\n=== Step 2: Populating VideoInfo ===")
-    VideoInfo.populate(proj_filt)
+    VideoInfo.populate(proj_filt, suppress_errors=True)
 
 
 def run_bottom_up(proj_filt):
@@ -100,9 +100,9 @@ def run_bottom_up(proj_filt):
         v_copy["bottom_up_method_name"] = "Bridging_OpenPose"
         BottomUpMethod.insert1(v_copy, skip_duplicates=True)
 
-    BottomUpPeople.populate(proj_filt)
-    BottomUpBridging.populate(proj_filt)
-    BlurredVideo.populate(proj_filt)
+    BottomUpPeople.populate(proj_filt, suppress_errors=True)
+    BottomUpBridging.populate(proj_filt, suppress_errors=True)
+    BlurredVideo.populate(proj_filt, suppress_errors=True)
     print("Bottom-up complete.")
 
 
@@ -117,7 +117,7 @@ def run_tracking(proj_filt, tracking_method_name):
         key["tracking_method"] = tracking_method
         TrackingBboxMethod.insert1(key, skip_duplicates=True)
 
-    TrackingBbox.populate(tracking_keys)
+    TrackingBbox.populate(tracking_keys, suppress_errors=True)
     print("Tracking complete.")
 
 
@@ -128,7 +128,7 @@ def run_annotation(proj_filt):
     for key in video_keys:
         annotate_single_person(key)
 
-    PersonBbox.populate(proj_filt)
+    PersonBbox.populate(proj_filt, suppress_errors=True)
 
     n_annotated = len(PersonBbox & proj_filt)
     n_videos = len(Video & proj_filt)
@@ -140,7 +140,7 @@ def run_annotation(proj_filt):
             "Annotate them, then re-run this script (bottom-up/tracking will be skipped)."
         )
 
-    DetectedFrames.populate(proj_filt)
+    DetectedFrames.populate(proj_filt, suppress_errors=True)
     return n_annotated > 0
 
 
@@ -157,7 +157,7 @@ def run_top_down(proj_filt, top_down_method_name):
         td["top_down_method"] = top_down_method
         TopDownMethod.insert1(td, skip_duplicates=True)
 
-    TopDownPerson.populate(proj_filt)
+    TopDownPerson.populate(proj_filt, suppress_errors=True)
     print("Top-down complete.")
 
 
@@ -172,7 +172,7 @@ def run_lifting(proj_filt, lifting_method_name):
         L["lifting_method"] = lifting_method
         LiftingMethod.insert1(L, skip_duplicates=True)
 
-    LiftingPerson.populate(proj_filt)
+    LiftingPerson.populate(proj_filt, suppress_errors=True)
     print("Lifting complete.")
 
 
