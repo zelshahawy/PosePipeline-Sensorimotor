@@ -35,13 +35,13 @@ cd "$REPO_DIR/docker"
 bash run_datajoint.sh start
 cd "$REPO_DIR"
 
-echo "Waiting for MySQL..."
-for i in $(seq 1 30); do
+echo "Waiting for MySQL (first run may take up to 90s)..."
+for i in $(seq 1 90); do
     if apptainer exec instance://datajoint-db mysqladmin ping -h 127.0.0.1 -u root -ppose --silent 2>/dev/null; then
-        echo "MySQL is ready."
+        echo "MySQL is ready (took ${i}s)."
         break
     fi
-    [ "$i" -eq 30 ] && { echo "ERROR: MySQL did not start."; exit 1; }
+    [ "$i" -eq 90 ] && { echo "ERROR: MySQL did not start within 90s."; exit 1; }
     sleep 1
 done
 
