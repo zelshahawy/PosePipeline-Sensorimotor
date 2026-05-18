@@ -29,7 +29,15 @@ fi
 
 if command -v module &>/dev/null; then
     module load apptainer 2>/dev/null || true
+    module load git-lfs 2>/dev/null || true
 fi
+
+if ! git lfs version &>/dev/null; then
+    echo "Installing git-lfs..."
+    curl -sL https://github.com/git-lfs/git-lfs/releases/download/v3.4.0/git-lfs-linux-amd64-v3.4.0.tar.gz | tar xz -C /tmp
+    /tmp/git-lfs-3.4.0/install.sh --local
+fi
+git lfs pull
 
 cd "$REPO_DIR/docker"
 bash run_datajoint.sh start
@@ -63,6 +71,9 @@ if [ ! -f "$REPO_DIR/dj_local_conf.json" ]; then
 EOF
     echo "Created dj_local_conf.json"
 fi
+
+export TFHUB_CACHE_DIR="$REPO_DIR/.tfhub_cache"
+mkdir -p "$TFHUB_CACHE_DIR"
 
 uv sync --inexact
 
