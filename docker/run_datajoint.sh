@@ -16,18 +16,22 @@ init_db() {
     apptainer exec --writable-tmpfs --bind "$DATA_DIR":/var/lib/mysql \
         "$SIF" mysqld --initialize-insecure --user="$(whoami)" --datadir=/var/lib/mysql
 
-    # Start mysqld temporarily to set the root password
+    # Start mysqld temporarily to set the root password and allow remote connections
     apptainer exec --writable-tmpfs --bind "$DATA_DIR":/var/lib/mysql \
         "$SIF" bash -c "
-            mysqld --user=$(whoami) --datadir=/var/lib/mysql --port=$MYSQL_PORT --skip-networking=OFF &
+            mkdir -p /var/run/mysqld
+            mysqld --user=$(whoami) --datadir=/var/lib/mysql --port=$MYSQL_PORT --socket=/var/run/mysqld/mysqld.sock &
             MPID=\$!
             for i in \$(seq 1 60); do
-                if mysqladmin ping -h 127.0.0.1 --silent 2>/dev/null; then
-                    mysql -h 127.0.0.1 -u root -e \"ALTER USER 'root'@'localhost' IDENTIFIED BY '$MYSQL_ROOT_PASSWORD';\"
-                    mysql -h 127.0.0.1 -u root -p$MYSQL_ROOT_PASSWORD -e \"CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '$MYSQL_ROOT_PASSWORD';\"
-                    mysql -h 127.0.0.1 -u root -p$MYSQL_ROOT_PASSWORD -e \"GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;\"
+                if mysqladmin ping --socket=/var/run/mysqld/mysqld.sock --silent 2>/dev/null; then
+                    mysql --socket=/var/run/mysqld/mysqld.sock -u root <<SQL
+ALTER USER 'root'@'localhost' IDENTIFIED BY '$MYSQL_ROOT_PASSWORD';
+CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '$MYSQL_ROOT_PASSWORD';
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+SQL
                     echo 'Database initialized with password.'
-                    kill \$MPID
+                    mysqladmin --socket=/var/run/mysqld/mysqld.sock -u root -p$MYSQL_ROOT_PASSWORD shutdown
                     wait \$MPID 2>/dev/null || true
                     exit 0
                 fi
@@ -60,7 +64,7 @@ start() {
 
     # Apptainer doesn't run Docker entrypoints, so start mysqld manually
     apptainer exec instance://"$INSTANCE_NAME" bash -c \
-        "mysqld --user=$(whoami) --datadir=/var/lib/mysql --port=$MYSQL_PORT --skip-networking=OFF &"
+        "mkdir -p /var/run/mysqld && mysqld --user=$(whoami) --datadir=/var/lib/mysql --port=$MYSQL_PORT --socket=/var/run/mysqld/mysqld.sock &"
 
     echo "Waiting for MySQL..."
     for i in $(seq 1 60); do
