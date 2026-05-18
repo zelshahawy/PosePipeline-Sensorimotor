@@ -64,7 +64,7 @@ EOF
     echo "Created dj_local_conf.json"
 fi
 
-uv sync
+uv sync --inexact
 
 uv run python scripts/run_pipeline.py --video_dir "$VIDEO_DIR" --project "$PROJECT" --output_dir "$VIDEO_DIR/output"
 
