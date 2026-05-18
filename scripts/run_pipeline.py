@@ -7,7 +7,9 @@ import numpy as np
 
 import pose_pipeline
 
-pose_pipeline.set_environmental_variables()
+_repo_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_project_dir = os.path.dirname(_repo_dir) + "/"
+pose_pipeline.set_environmental_variables(pose_project_dir=_project_dir)
 from pose_pipeline import *
 from pose_pipeline.pipeline import (
     BottomUpBridging,
@@ -57,7 +59,6 @@ def parse_args():
 
 
 def import_videos(video_dir, project):
-    """Step 1: Import all videos from a directory."""
     print(f"\n=== Step 1: Importing videos from {video_dir} ===")
     video_extensions = {".mp4", ".avi", ".mov", ".mkv"}
     files = [
@@ -86,13 +87,11 @@ def import_videos(video_dir, project):
 
 
 def run_video_info(proj_filt):
-    """Step 2: Populate VideoInfo."""
     print("\n=== Step 2: Populating VideoInfo ===")
     VideoInfo.populate(proj_filt)
 
 
 def run_bottom_up(proj_filt):
-    """Step 3: Run bottom-up methods (Bridging_OpenPose + BottomUpBridging)."""
     print("\n=== Step 3: Running bottom-up pose estimation ===")
     video_keys = (Video & proj_filt).fetch("KEY")
 
@@ -108,7 +107,6 @@ def run_bottom_up(proj_filt):
 
 
 def run_tracking(proj_filt, tracking_method_name):
-    """Step 4: Run tracking to detect bounding boxes."""
     print(f"\n=== Step 4: Running tracking ({tracking_method_name}) ===")
     tracking_method = (
         TrackingBboxMethodLookup & f'tracking_method_name="{tracking_method_name}"'
@@ -124,8 +122,7 @@ def run_tracking(proj_filt, tracking_method_name):
 
 
 def run_annotation(proj_filt):
-    """Step 5: Auto-annotate single-person videos, print status for multi-person."""
-    print("\n=== Step 5: Annotation (selecting person of interest) ===")
+    print("\n=== Step 5: Annotation ===")
     video_keys = (Video & proj_filt).fetch("KEY")
 
     for key in video_keys:
@@ -148,7 +145,6 @@ def run_annotation(proj_filt):
 
 
 def run_top_down(proj_filt, top_down_method_name):
-    """Step 6: Run top-down pose estimation."""
     print(
         f"\n=== Step 6: Running top-down pose estimation ({top_down_method_name}) ==="
     )
@@ -166,7 +162,6 @@ def run_top_down(proj_filt, top_down_method_name):
 
 
 def run_lifting(proj_filt, lifting_method_name):
-    """Step 7: Run 2D -> 3D lifting."""
     print(f"\n=== Step 7: Running lifting ({lifting_method_name}) ===")
     lifting_method = (
         LiftingMethodLookup & f'lifting_method_name="{lifting_method_name}"'
@@ -182,7 +177,6 @@ def run_lifting(proj_filt, lifting_method_name):
 
 
 def save_results(proj_filt, output_dir):
-    """Step 8: Fetch and save final 3D keypoints."""
     print(f"\n=== Step 8: Saving results to {output_dir} ===")
     os.makedirs(output_dir, exist_ok=True)
 

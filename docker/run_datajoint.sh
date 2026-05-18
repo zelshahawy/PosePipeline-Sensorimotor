@@ -12,11 +12,9 @@ init_db() {
     echo "Initializing MySQL data directory..."
     mkdir -p "$DATA_DIR"
 
-    # Initialize with no password first
     apptainer exec --writable-tmpfs --bind "$DATA_DIR":/var/lib/mysql \
         "$SIF" mysqld --initialize-insecure --user="$(whoami)" --datadir=/var/lib/mysql
 
-    # Start mysqld temporarily to set the root password and allow remote connections
     apptainer exec --writable-tmpfs --bind "$DATA_DIR":/var/lib/mysql \
         "$SIF" bash -c "
             mkdir -p /var/run/mysqld
@@ -46,7 +44,6 @@ SQL
 start() {
     [ ! -f "$SIF" ] && apptainer pull "$SIF" "$IMAGE"
 
-    # Initialize data directory if empty
     if [ ! -d "$DATA_DIR" ] || [ -z "$(ls -A "$DATA_DIR" 2>/dev/null)" ]; then
         init_db
     fi
@@ -62,7 +59,6 @@ start() {
         --no-home \
         "$SIF" "$INSTANCE_NAME"
 
-    # Apptainer doesn't run Docker entrypoints, so start mysqld manually
     apptainer exec instance://"$INSTANCE_NAME" bash -c \
         "mkdir -p /var/run/mysqld && mysqld --user=$(whoami) --datadir=/var/lib/mysql --port=$MYSQL_PORT --socket=/var/run/mysqld/mysqld.sock &"
 
