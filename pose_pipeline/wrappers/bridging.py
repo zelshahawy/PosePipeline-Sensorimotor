@@ -60,10 +60,11 @@ def get_model():
             local_tarball = os.path.join(model_cache, "metrabs_eff2l_y4_384px_800k_28ds.tar.gz")
             if not os.path.isdir(local_model_dir) and os.path.isfile(local_tarball):
                 import tarfile
+                os.makedirs(local_model_dir, exist_ok=True)
                 print(f"Extracting {local_tarball}...")
                 with tarfile.open(local_tarball, "r:gz") as tar:
-                    tar.extractall(model_cache)
-            if os.path.isdir(local_model_dir):
+                    tar.extractall(local_model_dir)
+            if os.path.isdir(local_model_dir) and os.path.isfile(os.path.join(local_model_dir, "saved_model.pb")):
                 print(f"Loading from local cache: {local_model_dir}")
                 import tensorflow as tf
                 model = tf.saved_model.load(local_model_dir)
