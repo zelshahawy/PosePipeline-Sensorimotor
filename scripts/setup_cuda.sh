@@ -1,0 +1,1 @@
+export LD_LIBRARY_PATH=$(uv run python -c "import nvidia.cublas.lib, nvidia.cudnn.lib, nvidia.cuda_runtime.lib; import os; print(':'.join([os.path.dirname(nvidia.cublas.lib.__file__), os.path.dirname(nvidia.cudnn.lib.__file__), os.path.dirname(nvidia.cuda_runtime.lib.__file__)]))")${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}

@@ -95,13 +95,14 @@ def run_bottom_up(proj_filt):
     print("\n=== Step 3: Running bottom-up pose estimation ===")
     video_keys = (Video & proj_filt).fetch("KEY")
 
+    BottomUpBridging.populate(proj_filt, suppress_errors=True)
+
     for v in video_keys:
         v_copy = v.copy()
         v_copy["bottom_up_method_name"] = "Bridging_OpenPose"
         BottomUpMethod.insert1(v_copy, skip_duplicates=True)
 
     BottomUpPeople.populate(proj_filt, suppress_errors=True)
-    BottomUpBridging.populate(proj_filt, suppress_errors=True)
     BlurredVideo.populate(proj_filt, suppress_errors=True)
     print("Bottom-up complete.")
 
