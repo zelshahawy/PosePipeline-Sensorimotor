@@ -1798,6 +1798,12 @@ class LiftingPersonVideo(dj.Computed):
 
             keypoints_reformat, keypoints_score = keypoints[None, ..., :2], keypoints[None, ..., 2]
             keypoints, scores, valid_frames = h36m_coco_format(keypoints_reformat, keypoints_score)
+
+            if not valid_frames or len(valid_frames[0]) == 0:
+                os.remove(blurred_video)
+                os.remove(out_file_name)
+                return
+
             re_kpts = revise_kpts(keypoints, scores, valid_frames)
             re_kpts = re_kpts.transpose(1, 0, 2, 3)
 
