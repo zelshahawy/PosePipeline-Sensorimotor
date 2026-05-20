@@ -14,6 +14,7 @@ from pose_pipeline import *
 from pose_pipeline.pipeline import (
     BottomUpBridging,
     BottomUpBridgingPerson,
+    TopDownPersonVideo,
     TrackingBboxMethodLookup,
     TopDownMethodLookup,
     LiftingMethodLookup,
@@ -209,10 +210,19 @@ def run_lifting(proj_filt, lifting_method_name):
     print("Lifting complete.")
 
 
+def run_overlay_videos(proj_filt):
+    print("\n=== Step 8: Generating overlay videos ===")
+    BlurredVideo.populate(proj_filt, suppress_errors=True)
+    TopDownPersonVideo.populate(proj_filt, suppress_errors=True)
+    n_videos = len(TopDownPersonVideo & proj_filt)
+    print(f"Generated {n_videos} overlay video(s).")
+
+
 def save_results(proj_filt, output_dir):
-    print(f"\n=== Step 8: Saving results to {output_dir} ===")
+    print(f"\n=== Step 9: Saving results to {output_dir} ===")
     os.makedirs(output_dir, exist_ok=True)
 
+    # Save 3D keypoints
     results = (LiftingPerson & proj_filt).fetch(as_dict=True)
 
     if not results:
@@ -230,7 +240,19 @@ def save_results(proj_filt, output_dir):
         np.save(out_path, kp)
         print(f"Saved: {out_path} (shape: {kp.shape})")
 
-    print(f"\nDone! Saved {len(results)} result(s) to {output_dir}")
+    # Save overlay videos
+    overlay_results = (TopDownPersonVideo & proj_filt).fetch(as_dict=True)
+    for r in overlay_results:
+        video_info = (Video & r).fetch1()
+        filename = os.path.splitext(video_info["filename"])[0]
+        video_path = r["output_video"]
+        out_path = os.path.join(output_dir, f"{filename}_skeleton.mp4")
+        import shutil
+        shutil.copy2(video_path, out_path)
+        os.remove(video_path)
+        print(f"Saved: {out_path}")
+
+    print(f"\nDone! Saved {len(results)} keypoints + {len(overlay_results)} overlay video(s) to {output_dir}")
 
 
 def main():
@@ -252,6 +274,7 @@ def main():
 
     run_top_down(proj_filt, args.top_down_method)
     run_lifting(proj_filt, args.lifting_method)
+    run_overlay_videos(proj_filt)
 
     output_dir = args.output_dir or os.path.join(args.video_dir, "output")
     save_results(proj_filt, output_dir)
