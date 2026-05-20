@@ -710,8 +710,8 @@ class PersonBbox(dj.Computed):
         # smooth any brief missing frames
         df = pd.DataFrame(bbox)
         df.iloc[~present] = np.nan
-        df = df.fillna(method="bfill", axis=0, limit=2)
-        df = df.fillna(method="ffill", axis=0, limit=2)
+        df = df.bfill(axis=0, limit=2)
+        df = df.ffill(axis=0, limit=2)
 
         # get smoothed version
         key["present"] = ~df.isna().any(axis=1).values
