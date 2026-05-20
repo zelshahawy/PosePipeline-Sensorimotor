@@ -37,3 +37,12 @@ dj_local_con*.json
 
 # exclude env file
 .env
+
+# Pipeline runtime artifacts
+*.mp4
+*.sif
+docker/data/
+data/
+logs/
+pose_gpu_*
+stored_vids/

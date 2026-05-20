@@ -49,11 +49,20 @@ class Video(dj.Manual):
         import subprocess
         import tempfile
 
-        # fetch video and place in temp directory
-        video = (Video & key).fetch1("video")
+        # fetch video into temp directory to avoid polluting the working directory
+        old_cwd = os.getcwd()
+        fetch_dir = tempfile.mkdtemp()
+        try:
+            os.chdir(fetch_dir)
+            video = (Video & key).fetch1("video")
+            video = os.path.join(fetch_dir, video) if not os.path.isabs(video) else video
+        finally:
+            os.chdir(old_cwd)
+
         fd, outfile = tempfile.mkstemp(suffix=".mp4")
         os.close(fd)
         shutil.move(video, outfile)
+        shutil.rmtree(fetch_dir, ignore_errors=True)
 
         video = outfile
 
