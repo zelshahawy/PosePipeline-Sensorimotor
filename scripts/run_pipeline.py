@@ -223,8 +223,8 @@ def save_results(proj_filt, output_dir):
         video_info = (Video & r).fetch1()
         filename = os.path.splitext(video_info["filename"])[0]
         out_path = os.path.join(output_dir, f"{filename}_keypoints3d.npy")
-        np.save(out_path, r["keypoints"])
-        print(f"Saved: {out_path} (shape: {r['keypoints'].shape})")
+        np.save(out_path, r["keypoints_3d"])
+        print(f"Saved: {out_path} (shape: {r['keypoints_3d'].shape})")
 
     print(f"\nDone! Saved {len(results)} result(s) to {output_dir}")
 
