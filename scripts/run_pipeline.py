@@ -18,7 +18,7 @@ from pose_pipeline.pipeline import (
     LiftingMethodLookup,
 )
 from pose_pipeline.utils.video_format import insert_local_video
-from pose_pipeline.utils.tracking import annotate_single_person
+from pose_pipeline.utils.tracking import annotate_single_person, annotate_dominant_person
 
 pose_pipeline.env.pytorch_memory_limit()
 pose_pipeline.env.tensorflow_memory_limit()
@@ -54,6 +54,11 @@ def parse_args():
         "--skip_bottom_up",
         action="store_true",
         help="Skip bottom-up step if already done",
+    )
+    parser.add_argument(
+        "--auto_annotate",
+        action="store_true",
+        help="Auto-select the dominant track (most frames) for multi-track videos",
     )
     return parser.parse_args()
 
@@ -122,12 +127,18 @@ def run_tracking(proj_filt, tracking_method_name):
     print("Tracking complete.")
 
 
-def run_annotation(proj_filt):
+def run_annotation(proj_filt, auto_annotate=False):
     print("\n=== Step 5: Annotation ===")
     video_keys = (Video & proj_filt).fetch("KEY")
 
+    # First pass: auto-annotate single-track videos
     for key in video_keys:
         annotate_single_person(key)
+
+    # Second pass: auto-annotate multi-track videos if requested
+    if auto_annotate:
+        print("Auto-annotating multi-track videos (selecting dominant track)...")
+        annotate_dominant_person(proj_filt)
 
     PersonBbox.populate(proj_filt, suppress_errors=True)
 
@@ -208,7 +219,7 @@ def main():
 
     run_tracking(proj_filt, args.tracking_method)
 
-    has_annotations = run_annotation(proj_filt)
+    has_annotations = run_annotation(proj_filt, auto_annotate=args.auto_annotate)
     if not has_annotations:
         print("\nStopping: no annotated videos to process further.")
         print("Use the annotations GUI, then re-run with --skip_bottom_up.")
