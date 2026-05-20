@@ -223,7 +223,7 @@ def save_results(proj_filt, output_dir):
         video_info = (Video & r).fetch1()
         filename = os.path.splitext(video_info["filename"])[0]
         out_path = os.path.join(output_dir, f"{filename}_keypoints3d.npy")
-        kp = r.get("keypoints_3d") or r.get("keypoints")
+        kp = r.get("keypoints_3d", r.get("keypoints"))
         if kp is None:
             print(f"Skipping {filename}: no keypoint data found (keys: {list(r.keys())})")
             continue
