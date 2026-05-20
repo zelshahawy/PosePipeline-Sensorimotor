@@ -60,6 +60,6 @@ def annotate_dominant_person(filt, subject_id=0):
 
         k.update({"video_subject_id": subject_id, "keep_tracks": np.array([best_tid])})
         PersonBboxValid.insert1(k)
-        print(f"  Auto-annotated video_id={k['video_id']}: selected track {best_tid} "
+        print(f"  Auto-annotated {k.get('filename', k)}: selected track {best_tid} "
               f"({track_stats[best_tid]['count']} frames, "
               f"{len(track_stats)} total tracks)")
