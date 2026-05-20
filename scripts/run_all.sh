@@ -32,6 +32,7 @@ fi
 if command -v module &>/dev/null; then
     module load apptainer 2>/dev/null || true
     module load git-lfs 2>/dev/null || true
+    module load ffmpeg 2>/dev/null || true
 fi
 
 if ! git lfs version &>/dev/null; then

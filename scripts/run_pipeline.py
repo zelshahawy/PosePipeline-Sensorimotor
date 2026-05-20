@@ -13,6 +13,7 @@ pose_pipeline.set_environmental_variables(pose_project_dir=_project_dir)
 from pose_pipeline import *
 from pose_pipeline.pipeline import (
     BottomUpBridging,
+    BottomUpBridgingPerson,
     TrackingBboxMethodLookup,
     TopDownMethodLookup,
     LiftingMethodLookup,
@@ -124,12 +125,21 @@ def run_tracking(proj_filt, tracking_method_name):
         TrackingBboxMethod.insert1(key, skip_duplicates=True)
 
     TrackingBbox.populate(tracking_keys, suppress_errors=True)
-    print("Tracking complete.")
+    n_tracked = len(TrackingBbox & proj_filt)
+    print(f"Tracking complete. {n_tracked} TrackingBbox entries.")
 
 
 def run_annotation(proj_filt, auto_annotate=False):
     print("\n=== Step 5: Annotation ===")
     video_keys = (Video & proj_filt).fetch("KEY")
+
+    # Diagnostics
+    n_tracking = len(TrackingBbox & proj_filt)
+    n_valid = len(PersonBboxValid & proj_filt)
+    print(f"  DB state: {len(video_keys)} videos, {n_tracking} TrackingBbox entries, {n_valid} PersonBboxValid entries")
+    if n_tracking > 0:
+        num_tracks = (TrackingBbox & proj_filt).fetch("num_tracks")
+        print(f"  Track counts per video: {list(num_tracks)}")
 
     # First pass: auto-annotate single-track videos
     for key in video_keys:
@@ -139,6 +149,9 @@ def run_annotation(proj_filt, auto_annotate=False):
     if auto_annotate:
         print("Auto-annotating multi-track videos (selecting dominant track)...")
         annotate_dominant_person(proj_filt)
+
+    n_valid_after = len(PersonBboxValid & proj_filt)
+    print(f"  PersonBboxValid entries after annotation: {n_valid_after}")
 
     PersonBbox.populate(proj_filt, suppress_errors=True)
 
@@ -160,6 +173,13 @@ def run_top_down(proj_filt, top_down_method_name):
     print(
         f"\n=== Step 6: Running top-down pose estimation ({top_down_method_name}) ==="
     )
+
+    # BottomUpBridgingPerson matches bridging detections to tracked person bboxes.
+    # Required by Bridging_* top-down methods.
+    BottomUpBridgingPerson.populate(proj_filt, suppress_errors=True)
+    n_bridging_person = len(BottomUpBridgingPerson & proj_filt)
+    print(f"  BottomUpBridgingPerson: {n_bridging_person} entries")
+
     top_down_method = (
         TopDownMethodLookup & f'top_down_method_name="{top_down_method_name}"'
     ).fetch1("top_down_method")
@@ -170,7 +190,8 @@ def run_top_down(proj_filt, top_down_method_name):
         TopDownMethod.insert1(td, skip_duplicates=True)
 
     TopDownPerson.populate(proj_filt, suppress_errors=True)
-    print("Top-down complete.")
+    n_top_down = len(TopDownPerson & proj_filt)
+    print(f"Top-down complete. {n_top_down} TopDownPerson entries.")
 
 
 def run_lifting(proj_filt, lifting_method_name):
