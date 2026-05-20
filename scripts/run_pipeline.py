@@ -15,6 +15,7 @@ from pose_pipeline.pipeline import (
     BottomUpBridging,
     BottomUpBridgingPerson,
     TopDownPersonVideo,
+    LiftingPersonVideo,
     TrackingBboxMethodLookup,
     TopDownMethodLookup,
     LiftingMethodLookup,
@@ -214,8 +215,12 @@ def run_overlay_videos(proj_filt):
     print("\n=== Step 8: Generating overlay videos ===")
     BlurredVideo.populate(proj_filt, suppress_errors=True)
     TopDownPersonVideo.populate(proj_filt, suppress_errors=True)
-    n_videos = len(TopDownPersonVideo & proj_filt)
-    print(f"Generated {n_videos} overlay video(s).")
+    n_td = len(TopDownPersonVideo & proj_filt)
+    print(f"  TopDownPersonVideo: {n_td} video(s)")
+
+    LiftingPersonVideo.populate(proj_filt, suppress_errors=True)
+    n_lp = len(LiftingPersonVideo & proj_filt)
+    print(f"  LiftingPersonVideo: {n_lp} video(s)")
 
 
 def save_results(proj_filt, output_dir):
@@ -241,16 +246,17 @@ def save_results(proj_filt, output_dir):
         print(f"Saved: {out_path} (shape: {kp.shape})")
 
     # Save overlay videos
-    overlay_results = (TopDownPersonVideo & proj_filt).fetch(as_dict=True)
-    for r in overlay_results:
-        video_info = (Video & r).fetch1()
-        filename = os.path.splitext(video_info["filename"])[0]
-        video_path = r["output_video"]
-        out_path = os.path.join(output_dir, f"{filename}_skeleton.mp4")
-        import shutil
-        shutil.copy2(video_path, out_path)
-        os.remove(video_path)
-        print(f"Saved: {out_path}")
+    import shutil
+    for table, suffix in [(TopDownPersonVideo, "_skeleton.mp4"), (LiftingPersonVideo, "_lifting3d.mp4")]:
+        table_results = (table & proj_filt).fetch(as_dict=True)
+        for r in table_results:
+            video_info = (Video & r).fetch1()
+            filename = os.path.splitext(video_info["filename"])[0]
+            video_path = r["output_video"]
+            out_path = os.path.join(output_dir, f"{filename}{suffix}")
+            shutil.copy2(video_path, out_path)
+            os.remove(video_path)
+            print(f"Saved: {out_path}")
 
     print(f"\nDone! Saved {len(results)} keypoints + {len(overlay_results)} overlay video(s) to {output_dir}")
 
