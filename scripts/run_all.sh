@@ -10,6 +10,8 @@ REPO_DIR_EARLY="$(cd "$SCRIPT_DIR_EARLY/.." && pwd)"
 
 VIDEO_DIR="${1:-$REPO_DIR_EARLY/stored_vids}"
 PROJECT="${2:-default_project}"
+shift 2 2>/dev/null || true
+EXTRA_ARGS="$*"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -77,6 +79,6 @@ mkdir -p "$TFHUB_CACHE_DIR"
 
 uv sync --inexact
 
-uv run python scripts/run_pipeline.py --video_dir "$VIDEO_DIR" --project "$PROJECT" --output_dir "$VIDEO_DIR/output"
+uv run python scripts/run_pipeline.py --video_dir "$VIDEO_DIR" --project "$PROJECT" --output_dir "$VIDEO_DIR/output" $EXTRA_ARGS
 
 echo "Done! Results saved to: $VIDEO_DIR/output/"
