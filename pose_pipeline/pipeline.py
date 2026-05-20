@@ -1802,7 +1802,7 @@ class LiftingPersonVideo(dj.Computed):
             if not valid_frames or len(valid_frames[0]) == 0:
                 os.remove(blurred_video)
                 os.remove(out_file_name)
-                return
+                raise ValueError(f"No valid keypoint frames for LiftingPersonVideo: {key}")
 
             re_kpts = revise_kpts(keypoints, scores, valid_frames)
             re_kpts = re_kpts.transpose(1, 0, 2, 3)
