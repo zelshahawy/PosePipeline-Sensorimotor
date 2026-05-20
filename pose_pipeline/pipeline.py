@@ -1714,6 +1714,48 @@ class LiftingPersonVideo(dj.Computed):
     output_video      : attach@localattach    # datajoint managed video file
     """
 
+    # bml_movi_87 joint indices that map to COCO 17 keypoints
+    _BML_TO_COCO = [
+        67,  # 0: nose → Head
+        5,   # 1: left_eye → lfronthead
+        36,  # 2: right_eye → rfronthead
+        6,   # 3: left_ear → lbackhead
+        37,  # 4: right_ear → rbackhead
+        76,  # 5: left_shoulder → Left Shoulder
+        84,  # 6: right_shoulder → Right Shoulder
+        72,  # 7: left_elbow → Left Elbow
+        80,  # 8: right_elbow → Right Elbow
+        77,  # 9: left_wrist → Left Wrist
+        85,  # 10: right_wrist → Right Wrist
+        73,  # 11: left_hip → Left Hip
+        81,  # 12: right_hip → Right Hip
+        75,  # 13: left_knee → Left Knee
+        83,  # 14: right_knee → Right Knee
+        71,  # 15: left_ankle → Left Ankle
+        79,  # 16: right_ankle → Right Ankle
+    ]
+
+    # bml_movi_87 joint indices that map to H36M 17 joints
+    _BML_TO_H36M = [
+        68,  # 0: Hip (root) → mhip
+        81,  # 1: Right hip → Right Hip
+        83,  # 2: Right knee → Right Knee
+        79,  # 3: Right foot → Right Ankle
+        73,  # 4: Left hip → Left Hip
+        75,  # 5: Left knee → Left Knee
+        71,  # 6: Left foot → Left Ankle
+        1,   # 7: Spine → upperback
+        70,  # 8: Thorax → Sternum
+        0,   # 9: Nose → backneck
+        67,  # 10: Head → Head
+        76,  # 11: Left shoulder → Left Shoulder
+        72,  # 12: Left elbow → Left Elbow
+        77,  # 13: Left wrist → Left Wrist
+        84,  # 14: Right shoulder → Right Shoulder
+        80,  # 15: Right elbow → Right Elbow
+        85,  # 16: Right wrist → Right Wrist
+    ]
+
     def make(self, key):
 
         keypoints = (TopDownPerson & key).fetch1("keypoints")
@@ -1722,6 +1764,12 @@ class LiftingPersonVideo(dj.Computed):
         width, height, fps = (VideoInfo & key).fetch1("width", "height", "fps")
         fd, out_file_name = tempfile.mkstemp(suffix=".mp4")
         os.close(fd)
+
+        # If keypoints have more than 17 joints (e.g. bml_movi_87 with 87 joints),
+        # map them down to COCO-17 (2D) and H36M-17 (3D) for GAST-Net visualization
+        if keypoints.shape[1] > 17:
+            keypoints = keypoints[:, self._BML_TO_COCO, :]
+            keypoints_3d = keypoints_3d[:, self._BML_TO_H36M, :3]
 
         with add_path(os.environ["GAST_PATH"]):
 

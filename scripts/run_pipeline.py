@@ -258,7 +258,9 @@ def save_results(proj_filt, output_dir):
             os.remove(video_path)
             print(f"Saved: {out_path}")
 
-    print(f"\nDone! Saved {len(results)} keypoints + {len(overlay_results)} overlay video(s) to {output_dir}")
+    n_td = len(TopDownPersonVideo & proj_filt)
+    n_lp = len(LiftingPersonVideo & proj_filt)
+    print(f"\nDone! Saved {len(results)} keypoints + {n_td} skeleton + {n_lp} lifting video(s) to {output_dir}")
 
 
 def main():
